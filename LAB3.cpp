@@ -1,10 +1,10 @@
-﻿#include <iostream>
+#include <iostream>
 #include <vector>
 #include <string>
 #include <limits>
+#include <map>
 using namespace std;
 
-// ===== Интерфейс стратегии скидок =====
 class IDiscount
 {
 public:
@@ -12,7 +12,6 @@ public:
     virtual ~IDiscount() {}
 };
 
-// ===== Реализация стратегии: без скидки =====
 class NoDiscount : public IDiscount
 {
 public:
@@ -22,7 +21,6 @@ public:
     }
 };
 
-// ===== Реализация стратегии: процентная скидка =====
 class PercentageDiscount : public IDiscount
 {
 private:
@@ -37,7 +35,6 @@ public:
     }
 };
 
-// ===== Типы комнат =====
 enum class RoomType
 {
     SINGLE = 1,
@@ -59,7 +56,6 @@ string roomTypeToString(RoomType t)
     return "Unknown";
 }
 
-// ===== Класс Room =====
 class Room
 {
 private:
@@ -76,10 +72,8 @@ public:
     int getId() const { return id; }
     RoomType getType() const { return type; }
 
-    // Установка скидки на конкретную комнату
     void setRoomDiscount(IDiscount *d) { roomDiscount = d; }
 
-    // Установка скидки на тип комнаты
     void setTypeDiscount(IDiscount *d) { typeDiscount = d; }
 
     double getPrice() const
@@ -105,11 +99,11 @@ public:
     }
 };
 
-// ===== Класс Hotel =====
 class Hotel
 {
 private:
     vector<Room> rooms;
+    std::map<RoomType, IDiscount *> typeDefaults;
 
 public:
     bool addRoom(const Room &r)
@@ -123,6 +117,11 @@ public:
             }
         }
         rooms.push_back(r);
+        auto it = typeDefaults.find(r.getType());
+        if (it != typeDefaults.end() && it->second != nullptr)
+        {
+            rooms.back().setTypeDiscount(it->second);
+        }
         return true;
     }
 
@@ -158,13 +157,14 @@ public:
 
     void setDiscountForType(RoomType type, IDiscount *disc)
     {
+        typeDefaults[type] = disc;
+
         for (auto &room : rooms)
             if (room.getType() == type)
                 room.setTypeDiscount(disc);
     }
 };
 
-// ===== Класс Menu =====
 class Menu
 {
 private:
@@ -413,7 +413,6 @@ private:
     }
 };
 
-// ===== main =====
 int main()
 {
     setlocale(LC_ALL, "");
